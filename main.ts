@@ -53,30 +53,34 @@ class Printer {
     console.error(data);
     this.observer.broadcast({ event: 'printError', data });
   }
+
+  onUpdate(callback: Function) {
+    this.observer.subscribe('print', callback);
+    this.observer.subscribe('printError', callback);
+
+    return () => {
+      this.observer.unsubscribe('print', callback);
+      this.observer.unsubscribe('printError', callback);
+    };
+  }
 }
 
-const observer = new Observer();
-const printer = new Printer(observer);
+const printer = new Printer(new Observer());
 
-const printListener = function (data: EventData) {
-  console.log(data);
-};
-const printErrorListener = function (data: EventData) {
-  console.error(data);
+// * Define the listener
+const printerListener = (data: EventData) => {
+  console.log('PRINTER LISTENER :', data);
 };
 
-// * Subscribe to the events
-observer.subscribe('print', printListener);
-observer.subscribe('printError', printErrorListener);
+// * Subscribe the listener
+const unsubscribeFunction = printer.onUpdate(printerListener);
 
 // * The listeners will be called
 printer.print('Hello World 1');
 printer.print('Hello World 2');
 printer.printError('Error 1');
 
-// * Unsubscribe from the events
-observer.unsubscribe('print', printListener);
-observer.unsubscribe('printError', printErrorListener);
+unsubscribeFunction();
 
 // * The listeners will not be called
 printer.print('Hello World 3');
